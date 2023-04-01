@@ -1,8 +1,6 @@
-from django.contrib.auth.models import User
-from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from datetime import datetime as dt
+
+from django.db import models
 
 
 # ======{ Профиль }======
@@ -39,14 +37,7 @@ class Profile(models.Model):
         verbose_name_plural = "Расширенные пользователи"
 
     def __str__(self):
-        return self.user.username
-
-
-@receiver(post_save, sender=User)
-def create_user(sender, **kwargs):
-    if kwargs['created']:
-        user = kwargs['instance']
-        Profile.objects.create(user=user).save()
+        return f"{self.pk}"
 
 
 # ======{ Транзакции }======
@@ -87,7 +78,8 @@ class Transactions(models.Model):
     time = models.DateTimeField("Время", default=dt.now)
     profile = models.ForeignKey(to=Profile, on_delete=models.CASCADE, verbose_name="Пользователь")
     type = models.ForeignKey(to=TypeTransaction, on_delete=models.CASCADE, verbose_name="Тип транзакции")
-    payment_method = models.ForeignKey(to=PaymentMethodTransaction, on_delete=models.CASCADE, verbose_name="Способ платежа")
+    payment_method = models.ForeignKey(to=PaymentMethodTransaction, on_delete=models.CASCADE,
+                                       verbose_name="Способ платежа")
     category = models.ForeignKey(to=CategoryTransaction, on_delete=models.CASCADE, verbose_name="Категория платежа")
     amount = models.FloatField("Сумма платежа", help_text="В рублях")
     client_fee = models.FloatField("Комиссия клиента", default=0)
@@ -101,4 +93,18 @@ class Transactions(models.Model):
         verbose_name_plural = "Транзакции"
 
     def __str__(self):
-        return self.title
+        return f"{self.time}"
+
+
+# ======{ Платежные карты }======
+class Card(models.Model):
+    profile = models.ForeignKey(to=Profile, on_delete=models.CASCADE, verbose_name="Пользователь")
+    registration_date = models.DateTimeField("Дата регистрации", blank=True, null=True, default=None)
+    deletion_date = models.DateTimeField("Дата удаления", blank=True, null=True, default=None)
+
+    class Meta:
+        verbose_name = "Платежная карта"
+        verbose_name_plural = "Платежные карты"
+
+    def __str__(self):
+        return f"{self.profile} - {self.pk}"
